@@ -1,7 +1,7 @@
 {
   "name": "pi-claude-code-tui",
-  "version": "0.1.13",
-  "description": "A pi package that gives the TUI a polished Pi startup header and Codex-style input box.",
+  "version": "0.1.14",
+  "description": "A pi package that gives the TUI a polished Pi startup header.",
   "type": "module",
   "keywords": [
     "pi-package",

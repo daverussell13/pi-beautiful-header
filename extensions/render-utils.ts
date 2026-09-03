@@ -1,21 +1,5 @@
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-export const BRAND_RGB = "215;119;87";
-export const brand = (text: string) => `\x1b[38;2;${BRAND_RGB}m${text}\x1b[39m`;
-
-/**
- * Build a block-cursor open style from a theme foreground ANSI sequence.
- * Turns `38;…` (fg) into `48;…` (bg) and pairs it with a dark foreground.
- */
-export function cursorOpenFromFgAnsi(fgAnsi: string): string {
-	const bg = fgAnsi.replace("\x1b[38;", "\x1b[48;").replace("\u001b[38;", "\u001b[48;");
-	// Dark ink on the accent block for contrast (same idea as the old brand cursor).
-	return `${bg}\x1b[38;2;24;24;30m`;
-}
-
-/** Fallback when theme accent is unavailable. */
-export const cursorStyleOpen = () => cursorOpenFromFgAnsi(`\x1b[38;2;${BRAND_RGB}m`);
-
 /**
  * Logo half is the hero (Claude Code style): it takes most of the width and
  * grows on wide terminals so the mark stays centered in a large left area.
@@ -28,14 +12,6 @@ export const MIN_TIPS_WIDTH = 16;
 /** Cap tips so they never steal the logo half on wide terminals. */
 export const MAX_TIPS_WIDTH = 28;
 const COLUMN_GAP = 3; // ` ${divider} `
-/** Zero-width APC marker emitted by pi-tui before the fake cursor when focused. */
-export const CURSOR_MARKER = "\x1b_pi:c\x07";
-
-/** Strip CSI SGR and APC sequences so border detection can inspect plain text. */
-export function stripAnsi(text: string): string {
-	return text.replace(/\x1b\[[0-9;]*m/g, "").replace(/\x1b_[^\x07]*\x07/g, "");
-}
-
 export function formatCwd(cwd: string, home = process.env.HOME): string {
 	return home && cwd.startsWith(home) ? `~${cwd.slice(home.length)}` : cwd;
 }
@@ -310,83 +286,4 @@ export function headerColumnWidths(
 	}
 
 	return { leftWidth, rightWidth, useTips: true };
-}
-
-/**
- * True for the editor's horizontal rule rows (plain ─ fill or scroll indicators).
- * Content and autocomplete rows start with padding spaces and do not match.
- */
-export function isEditorBorderLine(line: string): boolean {
-	const plain = stripAnsi(line);
-	if (/^─+$/.test(plain)) return true;
-	if (/^─*\s*[↑↓]\s+\d+\s+more\s*─*$/.test(plain)) return true;
-	return false;
-}
-
-/** Index of the bottom border in Editor.render output (before autocomplete rows). */
-export function findBottomBorderIndex(lines: string[]): number {
-	for (let i = lines.length - 1; i >= 1; i--) {
-		if (isEditorBorderLine(lines[i]!)) return i;
-	}
-	return Math.max(0, lines.length - 1);
-}
-
-export function roundedBorderLine(
-	sourceLine: string,
-	width: number,
-	kind: "top" | "bottom",
-	color: (text: string) => string = brand,
-): string {
-	if (width < 2) return color(truncateToWidth(kind === "top" ? "╭╮" : "╰╯", width, ""));
-
-	const corners = kind === "top" ? (["╭", "╮"] as const) : (["╰", "╯"] as const);
-	const plain = stripAnsi(sourceLine);
-	const scrollMatch = plain.match(/([↑↓]\s+\d+\s+more)/);
-
-	if (scrollMatch) {
-		const label = `─── ${scrollMatch[1]} `;
-		const fill = Math.max(0, width - 2 - visibleWidth(label));
-		return color(`${corners[0]}${label}${"─".repeat(fill)}${corners[1]}`);
-	}
-
-	return color(`${corners[0]}${"─".repeat(Math.max(0, width - 2))}${corners[1]}`);
-}
-
-/**
- * Restyle only the editor fake cursor (reverse-video span), not other reverse video.
- * Prefer the focused form with CURSOR_MARKER; fall back to the first short reverse span.
- */
-export function restyleEditorCursor(line: string, openStyle: string): string {
-	const markerIdx = line.indexOf(CURSOR_MARKER);
-	if (markerIdx !== -1) {
-		// Focused editor: only restyle the reverse-video span immediately after the marker.
-		const afterMarker = markerIdx + CURSOR_MARKER.length;
-		const tail = line.slice(afterMarker);
-		const replacedTail = tail.replace(/\x1b\[7m([^\x1b]*)\x1b\[0m/, `${openStyle}$1\x1b[0m`);
-		return line.slice(0, afterMarker) + replacedTail;
-	}
-
-	// Unfocused: restyle only the first reverse-video span with no nested escapes
-	// (cursor is a single grapheme or space).
-	return line.replace(/\x1b\[7m([^\x1b]*)\x1b\[0m/, `${openStyle}$1\x1b[0m`);
-}
-
-/**
- * Apply half-open rounded borders (top + bottom only) to Editor.render output.
- * Leaves content rows and autocomplete rows without vertical sides.
- */
-export function applyRoundedEditorBorders(
-	lines: string[],
-	width: number,
-	color: (text: string) => string = brand,
-): string[] {
-	if (lines.length === 0 || width < 4) return lines;
-
-	const result = lines.slice();
-	const bottomIdx = findBottomBorderIndex(result);
-
-	result[0] = roundedBorderLine(result[0]!, width, "top", color);
-	result[bottomIdx] = roundedBorderLine(result[bottomIdx]!, width, "bottom", color);
-
-	return result.map((line) => padRight(truncateToWidth(line, width, ""), width));
 }

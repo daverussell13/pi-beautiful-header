@@ -31,8 +31,7 @@ pi -e npm:pi-claude-code-tui
 - Center text: `Let's build something great`
 - Shows current model (`provider/id`), thinking effort, and cwd
 - Right-side tips panel on wide terminals (narrow sidebar with `…` truncation)
-- Half-open rounded input box (top/bottom borders only; uses editor border color)
-- Block cursor uses the theme accent color
+- Keeps pi's original input box and cursor
 - Keeps pi's original footer and spinner, with Claude-style rotating working verbs
 
 ## Local development
@@ -43,8 +42,8 @@ pi -e .
 
 ## Commands
 
-- `/use-claude-code-tui` — switch to this package's look (Pi header + Codex-style input)
-- `/use-default-tui` — switch back to pi's built-in header, footer, editor, and spinner
+- `/use-claude-code-tui` — switch to this package's look (Pi header)
+- `/use-default-tui` — switch back to pi's built-in header, footer, and spinner
 
 ## License
 
