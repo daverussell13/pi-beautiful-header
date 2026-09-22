@@ -215,20 +215,21 @@ class PiStartupHeader implements Component {
 		const theme = this.ctx.ui.theme;
 		const paint = (s: string) => theme.fg("accent", s);
 		const muted = (s: string) => theme.fg("muted", s);
+		const highlight = (s: string) => theme.fg("mdLink", s);
 		const bold = (s: string) => theme.bold(s);
 
-		if (width < 24) return [paint(`Pi v${VERSION}`)];
+		if (width < 24) return [paint("Pi")];
 
 		const innerWidth = width - 2;
 		const { leftWidth, rightWidth, useTips } = headerColumnWidths(innerWidth);
 		const leftLines = [
 			...piLogoFrame(this.frame, paint).map((line) => center(line, leftWidth)),
 			"",
-			center(bold("Pi Coding Agent"), leftWidth),
+			center(bold(highlight("Pi Coding Agent")), leftWidth),
 			center(muted(`v${VERSION}`), leftWidth),
 			"",
-			center(muted("There are many agent harnesses,"), leftWidth),
-			center(`${muted("but this one is ")}${bold(paint("yours"))}${muted(".")}`, leftWidth),
+			center(paint("There are many agent harnesses,"), leftWidth),
+			center(`${paint("but this one is ")}${bold(highlight("yours"))}${paint(".")}`, leftWidth),
 		];
 
 		// /use-default-tui + 3 random real pi commands (picked once in constructor).
@@ -247,7 +248,7 @@ class PiStartupHeader implements Component {
 			"",
 		];
 
-		const lines = [borderLine("╭", `${paint("Pi")} v${VERSION}`, "╮", width, paint)];
+		const lines = [borderLine("╭", "", "╮", width, paint)];
 		const bodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
 		for (let i = 0; i < bodyLineCount; i++) {
 			const content = useTips
