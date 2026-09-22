@@ -364,10 +364,12 @@ class PiStartupHeader implements Component {
 
 		const lines = [borderLine("╭", "", "╮", width, paint)];
 		const bodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
+		const leftTopPadding = useTips ? Math.max(0, Math.floor((bodyLineCount - leftLines.length) / 2)) : 0;
 		for (let i = 0; i < bodyLineCount; i++) {
+			const leftLine = leftLines[i - leftTopPadding] ?? "";
 			const content = useTips
-				? twoColumn(leftLines[i] ?? "", tipLines[i] ?? "", leftWidth, rightWidth, paint)
-				: padRight(leftLines[i] ?? "", leftWidth);
+				? twoColumn(leftLine, tipLines[i] ?? "", leftWidth, rightWidth, paint)
+				: padRight(leftLine, leftWidth);
 			lines.push(boxedLine(content, width, paint));
 		}
 		lines.push(borderLine("╰", "", "╯", width, paint));
