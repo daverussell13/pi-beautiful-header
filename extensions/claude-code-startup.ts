@@ -150,9 +150,14 @@ function piLogoFrame(frameIndex: number, paintBrand: (text: string) => string): 
 		maxX = 7;
 	}
 
-	return grid.map((row) => {
+	const croppedRows = grid.map((row) => row.slice(minX, maxX + 1));
+	const topBlankRows = croppedRows.findIndex((row) => row.some((cell) => cell !== "panel"));
+	const topTrim = topBlankRows > 0 ? topBlankRows : 0;
+	const visualRows = [...croppedRows.slice(topTrim), ...croppedRows.slice(0, topTrim)];
+
+	return visualRows.map((row) => {
 		let line = "";
-		for (let x = minX; x <= maxX; x++) line += colorCell(row[x]!, paintBrand);
+		for (const cell of row) line += colorCell(cell, paintBrand);
 		return line;
 	});
 }
