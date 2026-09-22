@@ -323,15 +323,22 @@ function applyPiLook(pi: ExtensionAPI, ctx: ExtensionContext, animateLogo = true
 	ctx.ui.setWorkingIndicator(undefined); // keep pi's original spinner
 }
 
-function shouldAnimateStartupLogo(event: { reason?: string }, ctx: ExtensionContext): boolean {
+function shouldAnimateStartupLogo(
+	event: { reason?: string; previousSessionFile?: string },
+	ctx: ExtensionContext,
+): boolean {
+	if (process.env.PI_BEAUTIFUL_HEADER_NO_ANIMATION === "1") return false;
+	if (event.previousSessionFile) return false;
 	if (event.reason === "resume" || event.reason === "reload" || event.reason === "fork") return false;
-	return ctx.sessionManager.getBranch().length === 0;
+	return ctx.sessionManager.getBranch().length === 0 && ctx.sessionManager.getEntries().length === 0;
 }
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (event, ctx) => {
-		const animateLogo = shouldAnimateStartupLogo(event, ctx);
-		const applyAfterOtherStartupHandlers = setTimeout(() => applyPiLook(pi, ctx, animateLogo), 0);
+		const applyAfterOtherStartupHandlers = setTimeout(() => {
+			const animateLogo = shouldAnimateStartupLogo(event, ctx);
+			applyPiLook(pi, ctx, animateLogo);
+		}, 0);
 		applyAfterOtherStartupHandlers.unref?.();
 	});
 
@@ -352,7 +359,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("use-claude-code-tui", {
 		description: "Switch to the pi-claude-code-tui look (Pi header)",
 		handler: async (_args, ctx) => {
-			applyPiLook(pi, ctx);
+			applyPiLook(pi, ctx, process.env.PI_BEAUTIFUL_HEADER_NO_ANIMATION !== "1");
 			ctx.ui.notify("Using pi-claude-code-tui", "info");
 		},
 	});
