@@ -185,7 +185,7 @@ function twoColumn(
 
 class PiStartupHeader implements Component {
 	private frame = 0;
-	private readonly timer: NodeJS.Timeout;
+	private readonly timer?: NodeJS.Timeout;
 	/** Cached once so logo animation frames don't reshuffle tip commands. */
 	private readonly tipCommands: string[];
 
@@ -193,6 +193,7 @@ class PiStartupHeader implements Component {
 		private readonly pi: ExtensionAPI,
 		private readonly ctx: ExtensionContext,
 		private readonly tui: TUI,
+		animateLogo = true,
 	) {
 		const pool = collectPiCommandNames(this.pi.getCommands());
 		this.tipCommands = pickSlashCommandTips(pool, {
@@ -200,11 +201,16 @@ class PiStartupHeader implements Component {
 			count: 3,
 		});
 
+		if (!animateLogo) {
+			this.frame = LOGO_FRAMES.length - 1;
+			return;
+		}
+
 		this.timer = setInterval(() => {
 			if (this.frame < LOGO_FRAMES.length - 1) {
 				this.frame++;
 				this.tui.requestRender();
-			} else {
+			} else if (this.timer) {
 				clearInterval(this.timer);
 			}
 		}, LOGO_ANIMATION_INTERVAL_MS);
@@ -263,7 +269,7 @@ class PiStartupHeader implements Component {
 	invalidate(): void {}
 
 	dispose(): void {
-		clearInterval(this.timer);
+		if (this.timer) clearInterval(this.timer);
 	}
 }
 
@@ -304,22 +310,28 @@ function disposeActiveHeader(): void {
 	activePiStartupHeader = undefined;
 }
 
-function applyPiLook(pi: ExtensionAPI, ctx: ExtensionContext): void {
+function applyPiLook(pi: ExtensionAPI, ctx: ExtensionContext, animateLogo = true): void {
 	if (ctx.mode !== "tui") return;
 
 	ctx.ui.setTitle("Pi");
 	ctx.ui.setHeader((tui) => {
 		disposeActiveHeader();
-		activePiStartupHeader = new PiStartupHeader(pi, ctx, tui);
+		activePiStartupHeader = new PiStartupHeader(pi, ctx, tui, animateLogo);
 		return activePiStartupHeader;
 	});
 	ctx.ui.setFooter(undefined); // keep pi's original footer
 	ctx.ui.setWorkingIndicator(undefined); // keep pi's original spinner
 }
 
+function shouldAnimateStartupLogo(event: { reason?: string }, ctx: ExtensionContext): boolean {
+	if (event.reason === "resume" || event.reason === "reload" || event.reason === "fork") return false;
+	return ctx.sessionManager.getBranch().length === 0;
+}
+
 export default function (pi: ExtensionAPI) {
-	pi.on("session_start", (_event, ctx) => {
-		const applyAfterOtherStartupHandlers = setTimeout(() => applyPiLook(pi, ctx), 0);
+	pi.on("session_start", (event, ctx) => {
+		const animateLogo = shouldAnimateStartupLogo(event, ctx);
+		const applyAfterOtherStartupHandlers = setTimeout(() => applyPiLook(pi, ctx, animateLogo), 0);
 		applyAfterOtherStartupHandlers.unref?.();
 	});
 
