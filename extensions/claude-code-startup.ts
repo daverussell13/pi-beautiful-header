@@ -358,6 +358,8 @@ class PiStartupHeader implements Component {
 			"",
 			center(paint("There are many agent harnesses,"), leftWidth),
 			center(`${paint("but this one is ")}${bold(highlight("yours"))}${paint(".")}`, leftWidth),
+			"",
+			"",
 		];
 
 		const tipLines = startupInfoLines(this.infoSections, rightWidth, paint, muted, bold);
