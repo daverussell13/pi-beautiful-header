@@ -112,7 +112,7 @@ describe("headerColumnWidths", () => {
 		const layout = headerColumnWidths(100);
 		assert.equal(layout.useTips, true);
 		assert.ok(layout.leftWidth >= 34);
-		assert.ok(layout.rightWidth <= 52);
+		assert.ok(layout.rightWidth <= 64);
 		assert.equal(layout.leftWidth + layout.rightWidth + 3, 100);
 	});
 
@@ -121,7 +121,7 @@ describe("headerColumnWidths", () => {
 		const layout = headerColumnWidths(74);
 		assert.equal(layout.useTips, true);
 		assert.ok(layout.leftWidth >= 34, `left should remain readable, got ${layout.leftWidth}`);
-		assert.ok(layout.rightWidth <= 52);
+		assert.ok(layout.rightWidth <= 64);
 	});
 
 	it("uses full inner width when tips cannot fit", () => {

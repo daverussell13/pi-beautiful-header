@@ -10,7 +10,7 @@ export const MIN_LEFT_WIDTH = 34;
 /** Narrowest info sidebar; below this, useful startup info is hidden. */
 export const MIN_TIPS_WIDTH = 24;
 /** Cap info so it stays readable without dominating wide terminals. */
-export const MAX_TIPS_WIDTH = 52;
+export const MAX_TIPS_WIDTH = 64;
 const COLUMN_GAP = 3; // ` ${divider} `
 export function formatCwd(cwd: string, home = process.env.HOME): string {
 	if (!home) return cwd;
