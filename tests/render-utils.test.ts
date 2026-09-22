@@ -108,21 +108,20 @@ describe("collectPiCommandNames", () => {
 });
 
 describe("headerColumnWidths", () => {
-	it("gives the logo half most of the width on wide terminals", () => {
+	it("keeps both columns readable on wide terminals", () => {
 		const layout = headerColumnWidths(100);
 		assert.equal(layout.useTips, true);
-		assert.ok(layout.leftWidth > layout.rightWidth);
-		assert.ok(layout.rightWidth <= 28);
+		assert.ok(layout.leftWidth >= 28);
+		assert.ok(layout.rightWidth <= 56);
 		assert.equal(layout.leftWidth + layout.rightWidth + 3, 100);
 	});
 
-	it("keeps a wide centered logo half on medium split-pane widths", () => {
+	it("keeps a readable logo half on medium split-pane widths", () => {
 		// ~76-col herdr pane → inner ~74
 		const layout = headerColumnWidths(74);
 		assert.equal(layout.useTips, true);
-		assert.ok(layout.leftWidth > layout.rightWidth);
-		assert.ok(layout.leftWidth >= 45, `left should be hero-width, got ${layout.leftWidth}`);
-		assert.ok(layout.rightWidth <= 28);
+		assert.ok(layout.leftWidth >= 28, `left should remain readable, got ${layout.leftWidth}`);
+		assert.ok(layout.rightWidth <= 56);
 	});
 
 	it("uses full inner width when tips cannot fit", () => {
@@ -132,11 +131,11 @@ describe("headerColumnWidths", () => {
 		assert.equal(layout.rightWidth, 0);
 	});
 
-	it("enables tips when logo + sidebar minimums fit", () => {
-		// min left 28 + gap 3 + min tips 16 = 47
-		const layout = headerColumnWidths(47);
+	it("enables info when logo + sidebar minimums fit", () => {
+		// min left 28 + gap 3 + min info 20 = 51
+		const layout = headerColumnWidths(51);
 		assert.equal(layout.useTips, true);
 		assert.ok(layout.leftWidth >= 28);
-		assert.ok(layout.rightWidth >= 16);
+		assert.ok(layout.rightWidth >= 20);
 	});
 });

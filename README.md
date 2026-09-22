@@ -29,7 +29,7 @@ pi -e npm:pi-claude-code-tui
 - Theme-accent rounded header border
 - Animated Pi logo matching the dynamic color-changing mark from `curl -fsSL https://pi.dev/install.sh | sh`, settling into the accent color
 - Center title/tagline: `Pi Coding Agent`, `v<pi version>`, and `There are many agent harnesses, but this one is yours.`
-- Right-side tips panel on wide terminals (narrow sidebar with `…` truncation)
+- Right-side startup info panel on wide terminals (`Context`, `Skills`, `Extensions`, and `Themes`)
 - Keeps pi's original input box and cursor
 - Keeps pi's original footer and spinner, with Claude-style rotating working verbs
 

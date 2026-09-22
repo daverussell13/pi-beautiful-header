@@ -7,10 +7,10 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
  */
 /** Narrowest left column that still fits the animated logo (8×3 cells). */
 export const MIN_LEFT_WIDTH = 28;
-/** Narrowest tips sidebar; below this, tips are hidden. */
-export const MIN_TIPS_WIDTH = 16;
-/** Cap tips so they never steal the logo half on wide terminals. */
-export const MAX_TIPS_WIDTH = 28;
+/** Narrowest info sidebar; below this, useful startup info is hidden. */
+export const MIN_TIPS_WIDTH = 20;
+/** Cap info so long extension/theme names can wrap cleanly on wide terminals. */
+export const MAX_TIPS_WIDTH = 56;
 const COLUMN_GAP = 3; // ` ${divider} `
 export function formatCwd(cwd: string, home = process.env.HOME): string {
 	if (!home) return cwd;
@@ -251,9 +251,9 @@ export function padRight(text: string, width: number, ellipsis = ""): string {
 /**
  * Layout widths for the startup header body (Claude Code proportions).
  *
- * - Tips sidebar ≈ 28% of width, clamped to [MIN_TIPS_WIDTH, MAX_TIPS_WIDTH].
- * - Left (logo) gets the rest and stays the wider half.
- * - Narrow: hide tips and give the left column the full inner width.
+ * - Info sidebar ≈ 44% of width, clamped to [MIN_TIPS_WIDTH, MAX_TIPS_WIDTH].
+ * - Left (logo) gets the rest and stays readable.
+ * - Narrow: hide info and give the left column the full inner width.
  */
 export function headerColumnWidths(
 	innerWidth: number,
@@ -270,18 +270,12 @@ export function headerColumnWidths(
 		return { leftWidth: innerWidth, rightWidth: 0, useTips: false };
 	}
 
-	// Narrow tips sidebar; logo half absorbs the remaining width.
-	let rightWidth = Math.min(maxTipsWidth, Math.max(minTipsWidth, Math.round(innerWidth * 0.28)));
+	// Wider info sidebar; logo half absorbs the remaining width.
+	let rightWidth = Math.min(maxTipsWidth, Math.max(minTipsWidth, Math.round(innerWidth * 0.44)));
 	let leftWidth = innerWidth - gap - rightWidth;
 
 	if (leftWidth < minLeftWidth) {
 		leftWidth = minLeftWidth;
-		rightWidth = innerWidth - gap - leftWidth;
-	}
-
-	// Keep logo half strictly wider than tips (Claude Code feel).
-	if (leftWidth <= rightWidth) {
-		leftWidth = Math.ceil((innerWidth - gap) * 0.65);
 		rightWidth = innerWidth - gap - leftWidth;
 	}
 

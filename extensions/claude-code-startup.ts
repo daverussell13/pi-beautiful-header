@@ -1,18 +1,27 @@
-import { VERSION, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { basename, dirname, extname, relative } from "node:path";
+import {
+	DefaultPackageManager,
+	getAgentDir,
+	loadProjectContextFiles,
+	SettingsManager,
+	VERSION,
+	type ExtensionAPI,
+	type ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
 	center,
-	collectPiCommandNames,
 	headerColumnWidths,
 	padRight,
-	pickSlashCommandTips,
 	pickWorkingVerb,
 } from "./render-utils.ts";
 
 const LOGO_CELL = "███";
 const LOGO_ANIMATION_INTERVAL_MS = 120;
 const WORKING_VERB_INTERVAL_MS = 2400;
+
+type StartupInfoSection = { title: string; items: string[] };
 
 type LogoColor = "panel" | "cyan" | "red" | "green" | "orange" | "white" | "flash" | "brand";
 type LogoFrame = {
@@ -179,27 +188,139 @@ function twoColumn(
 	rightWidth: number,
 	paint: (text: string) => string,
 ): string {
-	// Tips sidebar truncates with an ellipsis (Claude Code style); logo half does not.
-	return `${padRight(left, leftWidth)} ${paint("│")} ${padRight(right, rightWidth, "…")}`;
+	return `${padRight(left, leftWidth)} ${paint("│")} ${padRight(right, rightWidth, "")}`;
+}
+
+function wrapInfoItem(item: string, width: number): string[] {
+	if (width <= 0) return [];
+	const words = item.split(/([\s/:,-]+)/).filter(Boolean);
+	const lines: string[] = [];
+	let current = "";
+
+	for (const word of words) {
+		if (visibleWidth(current + word) <= width) {
+			current += word;
+			continue;
+		}
+
+		if (current) {
+			lines.push(current.trimEnd());
+			current = "";
+		}
+
+		let remaining = word.trimStart();
+		while (visibleWidth(remaining) > width) {
+			const chunk = truncateToWidth(remaining, width, "");
+			lines.push(chunk);
+			remaining = remaining.slice(chunk.length);
+		}
+		current = remaining;
+	}
+
+	if (current) lines.push(current.trimEnd());
+	return lines.length > 0 ? lines : [""];
+}
+
+function startupInfoLines(
+	sections: readonly StartupInfoSection[],
+	width: number,
+	paint: (text: string) => string,
+	muted: (text: string) => string,
+	bold: (text: string) => string,
+): string[] {
+	const lines: string[] = [""];
+	const itemWidth = Math.max(0, width - 2);
+	for (const section of sections) {
+		if (section.items.length === 0) continue;
+		lines.push(paint(bold(`[${section.title}]`)));
+		for (const item of section.items) {
+			const [first = "", ...rest] = wrapInfoItem(item, itemWidth);
+			lines.push(muted(`  ${first}`));
+			for (const continuation of rest) lines.push(muted(`  ${continuation}`));
+		}
+		lines.push("");
+	}
+	return lines.length > 1 ? lines : ["", muted("  No startup resources")];
+}
+
+function stripExtension(path: string): string {
+	const extension = extname(path);
+	return extension ? path.slice(0, -extension.length) : path;
+}
+
+function packageSourceLabel(source: string): string {
+	if (source.startsWith("npm:")) return source.slice("npm:".length);
+	if (source.startsWith("git:github.com/")) return source.slice("git:github.com/".length);
+	if (source.startsWith("https://github.com/")) return source.slice("https://github.com/".length);
+	return source;
+}
+
+function shortPackageResourcePath(path: string, baseDir: string | undefined): string {
+	if (!baseDir) return basename(path);
+	let shortPath = relative(baseDir, path).replace(/\\/g, "/");
+	if (basename(shortPath) === "index.ts" || basename(shortPath) === "index.js") shortPath = dirname(shortPath);
+	if (shortPath === ".") return "";
+	if (shortPath.startsWith("extensions/")) shortPath = shortPath.slice("extensions/".length);
+	return stripExtension(shortPath);
+}
+
+function formatExtensionLabel(resource: { path: string; metadata?: { source?: string; origin?: string; baseDir?: string } }): string {
+	const source = resource.metadata?.source ?? "";
+	if (resource.metadata?.origin === "package" && source) {
+		const label = packageSourceLabel(source);
+		const resourcePath = shortPackageResourcePath(resource.path, resource.metadata.baseDir);
+		return resourcePath ? `${label}:${resourcePath}` : label;
+	}
+	return basename(resource.path);
+}
+
+function formatSkillLabel(path: string): string {
+	return basename(path).toLowerCase() === "skill.md" ? basename(dirname(path)) : stripExtension(basename(path));
+}
+
+async function collectStartupInfo(ctx: ExtensionContext): Promise<StartupInfoSection[]> {
+	const agentDir = getAgentDir();
+	const settingsManager = SettingsManager.create(ctx.cwd, agentDir);
+	settingsManager.setProjectTrusted(ctx.isProjectTrusted());
+	await settingsManager.reload();
+
+	const packageManager = new DefaultPackageManager({ cwd: ctx.cwd, agentDir, settingsManager });
+	const resources = await packageManager.resolve();
+	const contextFiles = loadProjectContextFiles({ cwd: ctx.cwd, agentDir });
+
+	return [
+		{ title: "Context", items: contextFiles.map((file) => basename(file.path)) },
+		{ title: "Skills", items: resources.skills.filter((skill) => skill.enabled).map((skill) => formatSkillLabel(skill.path)) },
+		{
+			title: "Extensions",
+			items: resources.extensions
+				.filter((extension) => extension.enabled)
+				.map((extension) => formatExtensionLabel(extension)),
+		},
+		{ title: "Themes", items: resources.themes.filter((theme) => theme.enabled).map((theme) => stripExtension(basename(theme.path))) },
+	];
 }
 
 class PiStartupHeader implements Component {
 	private frame = 0;
+	private infoSections: StartupInfoSection[] = [{ title: "Resources", items: ["Loading..."] }];
 	private readonly timer?: NodeJS.Timeout;
-	/** Cached once so logo animation frames don't reshuffle tip commands. */
-	private readonly tipCommands: string[];
 
 	constructor(
-		private readonly pi: ExtensionAPI,
+		private readonly _pi: ExtensionAPI,
 		private readonly ctx: ExtensionContext,
 		private readonly tui: TUI,
 		animateLogo = true,
 	) {
-		const pool = collectPiCommandNames(this.pi.getCommands());
-		this.tipCommands = pickSlashCommandTips(pool, {
-			fixed: ["use-default-tui"],
-			count: 3,
-		});
+		void collectStartupInfo(this.ctx)
+			.then((sections) => {
+				this.infoSections = sections;
+				this.tui.requestRender();
+			})
+			.catch(() => {
+				this.infoSections = [{ title: "Resources", items: ["Unable to load"] }];
+				this.tui.requestRender();
+			});
 
 		if (!animateLogo) {
 			this.frame = LOGO_FRAMES.length - 1;
@@ -238,21 +359,7 @@ class PiStartupHeader implements Component {
 			center(`${paint("but this one is ")}${bold(highlight("yours"))}${paint(".")}`, leftWidth),
 		];
 
-		// /use-default-tui + 3 random real pi commands (picked once in constructor).
-		const tipDivider = paint("─".repeat(Math.max(8, Math.min(rightWidth, 22))));
-		const [cmd0 = "", cmd1 = "", cmd2 = "", cmd3 = ""] = this.tipCommands;
-		const tipLines = [
-			"",
-			paint(bold("Getting started")),
-			muted("Ask Pi to build it"),
-			tipDivider,
-			paint(bold("Commands")),
-			muted(cmd0),
-			muted(cmd1),
-			muted(cmd2),
-			muted(cmd3),
-			"",
-		];
+		const tipLines = startupInfoLines(this.infoSections, rightWidth, paint, muted, bold);
 
 		const lines = [borderLine("╭", "", "╮", width, paint)];
 		const bodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
