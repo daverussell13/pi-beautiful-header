@@ -4,9 +4,6 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
 	center,
 	collectPiCommandNames,
-	formatCwd,
-	formatModelLabel,
-	formatThinkingLabel,
 	headerColumnWidths,
 	padRight,
 	pickSlashCommandTips,
@@ -218,22 +215,20 @@ class PiStartupHeader implements Component {
 		const theme = this.ctx.ui.theme;
 		const paint = (s: string) => theme.fg("accent", s);
 		const muted = (s: string) => theme.fg("muted", s);
-		const dim = (s: string) => theme.fg("dim", s);
 		const bold = (s: string) => theme.bold(s);
 
 		if (width < 24) return [paint(`Pi v${VERSION}`)];
 
 		const innerWidth = width - 2;
 		const { leftWidth, rightWidth, useTips } = headerColumnWidths(innerWidth);
-		const model = formatModelLabel(this.ctx.model);
-		const effort = formatThinkingLabel(this.pi.getThinkingLevel());
-		const cwd = formatCwd(this.ctx.cwd);
-
 		const leftLines = [
 			...piLogoFrame(this.frame, paint).map((line) => center(line, leftWidth)),
-			center(bold("Let's build something great"), leftWidth),
-			center(muted(`${model} · ${effort} effort`), leftWidth),
-			center(dim(cwd), leftWidth),
+			"",
+			center(bold("Pi Coding Agent"), leftWidth),
+			center(muted(`v${VERSION}`), leftWidth),
+			"",
+			center(muted("There are many agent harnesses,"), leftWidth),
+			center(`${muted("but this one is ")}${bold(paint("yours"))}${muted(".")}`, leftWidth),
 		];
 
 		// /use-default-tui + 3 random real pi commands (picked once in constructor).
@@ -253,7 +248,8 @@ class PiStartupHeader implements Component {
 		];
 
 		const lines = [borderLine("╭", `${paint("Pi")} v${VERSION}`, "╮", width, paint)];
-		for (let i = 0; i < leftLines.length; i++) {
+		const bodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
+		for (let i = 0; i < bodyLineCount; i++) {
 			const content = useTips
 				? twoColumn(leftLines[i] ?? "", tipLines[i] ?? "", leftWidth, rightWidth, paint)
 				: padRight(leftLines[i] ?? "", leftWidth);
