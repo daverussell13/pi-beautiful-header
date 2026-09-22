@@ -230,14 +230,15 @@ function startupInfoLines(
 ): string[] {
 	const lines: string[] = [""];
 	const itemWidth = Math.max(0, width - 2);
+	const maxItemWidth = Math.max(12, Math.min(32, itemWidth));
 	for (const section of sections) {
 		if (section.items.length === 0) continue;
 		lines.push(paint(bold(`[${section.title}]`)));
-		for (const item of section.items) {
-			const [first = "", ...rest] = wrapInfoItem(item, itemWidth);
-			lines.push(muted(`  ${first}`));
-			for (const continuation of rest) lines.push(muted(`  ${continuation}`));
-		}
+
+		const compactItems = section.items.map((item) => truncateToWidth(item, maxItemWidth, "…"));
+		const [first = "", ...rest] = wrapInfoItem(compactItems.join(", "), itemWidth);
+		lines.push(muted(`  ${first}`));
+		for (const continuation of rest) lines.push(muted(`  ${continuation}`));
 		lines.push("");
 	}
 	return lines.length > 1 ? lines : ["", muted("  No startup resources")];
