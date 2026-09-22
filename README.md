@@ -36,8 +36,18 @@ pi -e npm:pi-claude-code-tui
 
 ## Local development
 
+Run the package locally in pi:
+
 ```bash
 pi -e .
+```
+
+Validate changes before publishing:
+
+```bash
+npm run typecheck
+npm test
+npm pack --dry-run
 ```
 
 ## Commands

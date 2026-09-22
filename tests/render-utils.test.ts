@@ -15,10 +15,17 @@ import {
 describe("formatCwd", () => {
 	it("replaces HOME prefix with ~", () => {
 		assert.equal(formatCwd("/Users/me/Workspace/mypi", "/Users/me"), "~/Workspace/mypi");
+		assert.equal(formatCwd("/Users/me", "/Users/me"), "~");
+		assert.equal(formatCwd("/Users/me/Workspace/mypi", "/Users/me/"), "~/Workspace/mypi");
 	});
 
 	it("leaves paths outside home unchanged", () => {
 		assert.equal(formatCwd("/tmp/project", "/Users/me"), "/tmp/project");
+		assert.equal(formatCwd("/Users/me2/project", "/Users/me"), "/Users/me2/project");
+	});
+
+	it("leaves paths unchanged when HOME is missing", () => {
+		assert.equal(formatCwd("/Users/me/project", undefined), "/Users/me/project");
 	});
 });
 

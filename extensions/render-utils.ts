@@ -13,7 +13,11 @@ export const MIN_TIPS_WIDTH = 16;
 export const MAX_TIPS_WIDTH = 28;
 const COLUMN_GAP = 3; // ` ${divider} `
 export function formatCwd(cwd: string, home = process.env.HOME): string {
-	return home && cwd.startsWith(home) ? `~${cwd.slice(home.length)}` : cwd;
+	if (!home) return cwd;
+	const normalizedHome = home.endsWith("/") ? home.slice(0, -1) : home;
+	return cwd === normalizedHome || cwd.startsWith(`${normalizedHome}/`)
+		? `~${cwd.slice(normalizedHome.length)}`
+		: cwd;
 }
 
 /** Prefer `provider/id` when available (matches other pi extension examples). */
