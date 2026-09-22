@@ -323,22 +323,15 @@ function applyPiLook(pi: ExtensionAPI, ctx: ExtensionContext, animateLogo = true
 	ctx.ui.setWorkingIndicator(undefined); // keep pi's original spinner
 }
 
-function shouldAnimateStartupLogo(
-	event: { reason?: string; previousSessionFile?: string },
-	ctx: ExtensionContext,
-): boolean {
+function shouldAnimateStartupLogo(event: { reason?: string }): boolean {
 	if (process.env.PI_BEAUTIFUL_HEADER_NO_ANIMATION === "1") return false;
-	if (event.previousSessionFile) return false;
-	if (event.reason === "resume" || event.reason === "reload" || event.reason === "fork") return false;
-	return ctx.sessionManager.getBranch().length === 0 && ctx.sessionManager.getEntries().length === 0;
+	return event.reason === "startup" || event.reason === "new";
 }
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (event, ctx) => {
-		const applyAfterOtherStartupHandlers = setTimeout(() => {
-			const animateLogo = shouldAnimateStartupLogo(event, ctx);
-			applyPiLook(pi, ctx, animateLogo);
-		}, 0);
+		const animateLogo = shouldAnimateStartupLogo(event);
+		const applyAfterOtherStartupHandlers = setTimeout(() => applyPiLook(pi, ctx, animateLogo), 0);
 		applyAfterOtherStartupHandlers.unref?.();
 	});
 
