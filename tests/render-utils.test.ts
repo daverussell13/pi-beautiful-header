@@ -111,8 +111,8 @@ describe("headerColumnWidths", () => {
 	it("keeps both columns readable on wide terminals", () => {
 		const layout = headerColumnWidths(100);
 		assert.equal(layout.useTips, true);
-		assert.ok(layout.leftWidth >= 28);
-		assert.ok(layout.rightWidth <= 56);
+		assert.ok(layout.leftWidth >= 34);
+		assert.ok(layout.rightWidth <= 52);
 		assert.equal(layout.leftWidth + layout.rightWidth + 3, 100);
 	});
 
@@ -120,8 +120,8 @@ describe("headerColumnWidths", () => {
 		// ~76-col herdr pane → inner ~74
 		const layout = headerColumnWidths(74);
 		assert.equal(layout.useTips, true);
-		assert.ok(layout.leftWidth >= 28, `left should remain readable, got ${layout.leftWidth}`);
-		assert.ok(layout.rightWidth <= 56);
+		assert.ok(layout.leftWidth >= 34, `left should remain readable, got ${layout.leftWidth}`);
+		assert.ok(layout.rightWidth <= 52);
 	});
 
 	it("uses full inner width when tips cannot fit", () => {
@@ -132,10 +132,10 @@ describe("headerColumnWidths", () => {
 	});
 
 	it("enables info when logo + sidebar minimums fit", () => {
-		// min left 28 + gap 3 + min info 20 = 51
-		const layout = headerColumnWidths(51);
+		// min left 34 + gap 3 + min info 24 = 61
+		const layout = headerColumnWidths(61);
 		assert.equal(layout.useTips, true);
-		assert.ok(layout.leftWidth >= 28);
-		assert.ok(layout.rightWidth >= 20);
+		assert.ok(layout.leftWidth >= 34);
+		assert.ok(layout.rightWidth >= 24);
 	});
 });

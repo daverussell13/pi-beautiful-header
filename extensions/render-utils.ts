@@ -6,11 +6,11 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
  * Tips are a narrow right sidebar that truncates with an ellipsis.
  */
 /** Narrowest left column that still fits the animated logo (8×3 cells). */
-export const MIN_LEFT_WIDTH = 28;
+export const MIN_LEFT_WIDTH = 34;
 /** Narrowest info sidebar; below this, useful startup info is hidden. */
-export const MIN_TIPS_WIDTH = 20;
-/** Cap info so long extension/theme names can wrap cleanly on wide terminals. */
-export const MAX_TIPS_WIDTH = 56;
+export const MIN_TIPS_WIDTH = 24;
+/** Cap info so it stays readable without dominating wide terminals. */
+export const MAX_TIPS_WIDTH = 52;
 const COLUMN_GAP = 3; // ` ${divider} `
 export function formatCwd(cwd: string, home = process.env.HOME): string {
 	if (!home) return cwd;
@@ -251,7 +251,7 @@ export function padRight(text: string, width: number, ellipsis = ""): string {
 /**
  * Layout widths for the startup header body (Claude Code proportions).
  *
- * - Info sidebar ≈ 44% of width, clamped to [MIN_TIPS_WIDTH, MAX_TIPS_WIDTH].
+ * - Info sidebar ≈ 40% of width, clamped to [MIN_TIPS_WIDTH, MAX_TIPS_WIDTH].
  * - Left (logo) gets the rest and stays readable.
  * - Narrow: hide info and give the left column the full inner width.
  */
@@ -271,7 +271,7 @@ export function headerColumnWidths(
 	}
 
 	// Wider info sidebar; logo half absorbs the remaining width.
-	let rightWidth = Math.min(maxTipsWidth, Math.max(minTipsWidth, Math.round(innerWidth * 0.44)));
+	let rightWidth = Math.min(maxTipsWidth, Math.max(minTipsWidth, Math.round(innerWidth * 0.4)));
 	let leftWidth = innerWidth - gap - rightWidth;
 
 	if (leftWidth < minLeftWidth) {
