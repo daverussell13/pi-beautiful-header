@@ -363,8 +363,13 @@ class PiStartupHeader implements Component {
 		const tipLines = startupInfoLines(this.infoSections, rightWidth, paint, muted, bold);
 
 		const lines = [borderLine("╭", "", "╮", width, paint)];
-		const bodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
-		const leftTopPadding = useTips ? Math.max(0, Math.floor((bodyLineCount - leftLines.length) / 2)) : 0;
+		const minimumBodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
+		// Keep vertical centering visually exact: if the available extra space is odd,
+		// add one blank body row so top and bottom gaps can be identical.
+		const bodyLineCount = useTips && (minimumBodyLineCount - leftLines.length) % 2 !== 0
+			? minimumBodyLineCount + 1
+			: minimumBodyLineCount;
+		const leftTopPadding = useTips ? Math.max(0, (bodyLineCount - leftLines.length) / 2) : 0;
 		for (let i = 0; i < bodyLineCount; i++) {
 			const leftLine = leftLines[i - leftTopPadding] ?? "";
 			const content = useTips
