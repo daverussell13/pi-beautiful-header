@@ -33,7 +33,7 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/claude-code-startup.ts"
+      "./extensions/pi-beautiful-header.ts"
     ],
     "image": "https://raw.githubusercontent.com/Phoobobo/pi-claude-code-tui/main/assets/screenshot.png"
   },

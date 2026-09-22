@@ -4,7 +4,7 @@
 
 `pi-claude-code-tui` is a pi package that customizes the pi TUI startup look:
 
-- Extension entrypoint: `extensions/claude-code-startup.ts`
+- Extension entrypoint: `extensions/pi-beautiful-header.ts`
 - Pure layout/editor helpers: `extensions/render-utils.ts`
 - Unit tests: `tests/render-utils.test.ts`
 - Screenshot asset: `assets/screenshot.png`
@@ -27,7 +27,7 @@ The extension registers on `session_start`, replaces the TUI header/editor, and 
 Run `npx tsc --noEmit` and `npm test` before committing TypeScript changes.
 
 Pure layout/editor helpers live in `extensions/render-utils.ts` (not a pi entrypoint).
-The registered extension is only `extensions/claude-code-startup.ts` via `package.json` `pi.extensions`.
+The registered extension is only `extensions/pi-beautiful-header.ts` via `package.json` `pi.extensions`.
 
 ## Coding style
 
