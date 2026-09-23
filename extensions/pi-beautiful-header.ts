@@ -20,6 +20,8 @@ import {
 const LOGO_CELL = "███";
 const LOGO_ANIMATION_INTERVAL_MS = 120;
 const WORKING_VERB_INTERVAL_MS = 2400;
+/** Maximum wrapped resource lines shown for each startup-info section. */
+const MAX_STARTUP_INFO_LINES = 6;
 
 type StartupInfoSection = { title: string; items: string[] };
 
@@ -230,13 +232,19 @@ function startupInfoLines(
 ): string[] {
 	const lines: string[] = [""];
 	const itemWidth = Math.max(0, width - 2);
-	const maxItemWidth = Math.max(12, Math.min(32, itemWidth));
 	for (const section of sections) {
 		lines.push(paint(bold(`[${section.title}]`)));
 
 		const items = section.items.length > 0 ? section.items : ["-"];
-		const compactItems = items.map((item) => truncateToWidth(item, maxItemWidth, "…"));
-		const [first = "", ...rest] = wrapInfoItem(compactItems.join(", "), itemWidth);
+		const wrappedItems = wrapInfoItem(items.join(", "), itemWidth);
+		const visibleItems = wrappedItems.length > MAX_STARTUP_INFO_LINES
+			? [
+				...wrappedItems.slice(0, MAX_STARTUP_INFO_LINES - 1),
+				// Reserve one column for an overflow marker on the final visible line.
+				`${truncateToWidth(wrappedItems[MAX_STARTUP_INFO_LINES - 1]!, itemWidth - 1, "")}…`,
+			]
+			: wrappedItems;
+		const [first = "", ...rest] = visibleItems;
 		lines.push(muted(`  ${first}`));
 		for (const continuation of rest) lines.push(muted(`  ${continuation}`));
 		lines.push("");
