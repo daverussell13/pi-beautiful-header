@@ -233,7 +233,7 @@ function startupInfoLines(
 	const lines: string[] = [""];
 	const itemWidth = Math.max(0, width - 2);
 	for (const section of sections) {
-		lines.push(paint(bold(`[${section.title}]`)));
+		lines.push(paint(bold(section.title)));
 
 		const items = section.items.length > 0 ? section.items : ["-"];
 		const wrappedItems = wrapInfoItem(items.join(", "), itemWidth);
@@ -370,7 +370,7 @@ class PiStartupHeader implements Component {
 			"",
 		];
 
-		const tipLines = startupInfoLines(this.infoSections, rightWidth, paint, muted, bold);
+		const tipLines = startupInfoLines(this.infoSections, rightWidth, highlight, muted, bold);
 
 		const lines = [borderLine("╭", "", "╮", width, paint)];
 		const minimumBodyLineCount = useTips ? Math.max(leftLines.length, tipLines.length) : leftLines.length;
